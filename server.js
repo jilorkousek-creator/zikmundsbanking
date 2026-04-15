@@ -6,31 +6,23 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendEmail(to, subject, text) {
+  try {
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: to,
+      subject: subject,
+      text: text
+    });
+
+    console.log("Email sent");
+  } catch (err) {
+    console.error("Email error:", err);
   }
-});
-
-function sendEmail(to, subject, text) {
-  transporter.sendMail({
-    from: "Zikmund Banking 🐱",
-    to,
-    subject,
-    text
-  }, (err, info) => {
-    if (err) {
-      console.error("Email error:", err);
-    } else {
-      console.log("Email sent");
-    }
-  });
 }
 
 const PEPPER = "ZIKMUNDS_BANKING_SUPER_SECRET_2026";
