@@ -9,7 +9,9 @@ const session = require("express-session");
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -369,7 +371,6 @@ app.post("/transfer", requireLogin, (req, res) => {
   [fromUser, toUser, amount, "transfer"]
 );
 
-// 👇 SEM TO VLOŽÍŠ
 db.get("SELECT email FROM users WHERE username = ?", [fromUser], (err, senderData) => {
   db.get("SELECT email FROM users WHERE username = ?", [toUser], (err, receiverData) => {
 
