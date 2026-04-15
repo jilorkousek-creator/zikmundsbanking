@@ -306,74 +306,63 @@ app.get("/dashboard", (req, res) => {
 });
 
 //transfer
-app.post("/transfer", (req, res) => {
-  if (!req.session.username) {
-    return res.redirect("/");
-  }
-
+app.post("/transfer", requireLogin, (req, res) => {
   const fromUser = req.session.username;
-  const toUser = req.body.to_user.trim().toLowerCase();
-  const amount = parseInt(req.body.amount);
+  const toUser = req.body.to_user;
+  const amount = Number(req.body.amount);
   const password = req.body.password;
+
+  if (!amount || amount <= 0 || !Number.isFinite(amount)) {
+    return res.send("Neplatná částka");
+  }
 
   if (fromUser === toUser) {
     return res.send("Nemůžeš poslat sám sobě 😺");
   }
 
-  if (amount <= 0 || isNaN(amount)) {
-    return res.send("Neplatná částka");
-  }
+  db.get("SELECT * FROM users WHERE username = ?", [fromUser], async (err, sender) => {
+    if (!sender) return res.send("Chyba uživatele");
 
-  // heslo overit
-  db.get(
-    "SELECT * FROM users WHERE username = ?",
-    [fromUser],
-    async (err, user) => {
+    const isMatch = await bcrypt.compare(password + PEPPER, sender.password);
 
-      if (err || !user) {
-        return res.send("Chyba uživatele");
-      }
-
-      const isMatch = await bcrypt.compare(password + PEPPER, user.password);
-
-      if (!isMatch) {
-        return res.send("Špatné heslo ❌");
-      }
-
-      if (user.rybicky < amount) {
-        return res.send("Nedostatek rybiček 🐟");
-      }
-
-      db.get(
-        "SELECT * FROM users WHERE username = ?",
-        [toUser],
-        (err, receiver) => {
-
-          if (err || !receiver) {
-            return res.send("Příjemce neexistuje");
-          }
-
-          db.run(
-            "UPDATE users SET rybicky = rybicky - ? WHERE username = ?",
-            [amount, fromUser]
-          );
-
-          db.run(
-            "UPDATE users SET rybicky = rybicky + ? WHERE username = ?",
-            [amount, toUser]
-          );
-
-          db.run(
-            `INSERT INTO transactions (from_user, to_user, amount, type)
-             VALUES (?, ?, ?, ?)`,
-            [fromUser, toUser, amount, "transfer"]
-          );
-
-          res.redirect("/dashboard");
-        }
-      );
+    if (!isMatch) {
+      return res.send("Špatné heslo");
     }
-  );
+
+    if (sender.rybicky < amount) {
+      return res.send("Nedostatek rybiček 🐟");
+    }
+
+    db.get("SELECT * FROM users WHERE username = ?", [toUser], (err, receiver) => {
+      if (!receiver) {
+        return res.send("Příjemce neexistuje");
+      }
+
+      db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+
+        db.run(
+          "UPDATE users SET rybicky = rybicky - ? WHERE username = ?",
+          [amount, fromUser]
+        );
+
+        db.run(
+          "UPDATE users SET rybicky = rybicky + ? WHERE username = ?",
+          [amount, toUser]
+        );
+
+        db.run(
+          `INSERT INTO transactions (from_user, to_user, amount, type)
+           VALUES (?, ?, ?, ?)`,
+          [fromUser, toUser, amount, "transfer"]
+        );
+
+        db.run("COMMIT", () => {
+          res.redirect("/dashboard");
+        });
+      });
+    });
+  });
 });
 
 //sporak 
