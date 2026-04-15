@@ -92,7 +92,7 @@ db.run(`
 
 // routes
 
-// hlavní stránka
+// hlavni stranka
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "index.html"));
 });
@@ -363,6 +363,33 @@ app.post("/transfer", requireLogin, (req, res) => {
            VALUES (?, ?, ?, ?)`,
           [fromUser, toUser, amount, "transfer"]
         );
+        db.run(
+  `INSERT INTO transactions (from_user, to_user, amount, type)
+   VALUES (?, ?, ?, ?)`,
+  [fromUser, toUser, amount, "transfer"]
+);
+
+// 👇 SEM TO VLOŽÍŠ
+db.get("SELECT email FROM users WHERE username = ?", [fromUser], (err, senderData) => {
+  db.get("SELECT email FROM users WHERE username = ?", [toUser], (err, receiverData) => {
+
+    if (senderData && receiverData) {
+
+      sendEmail(
+        senderData.email,
+        "Odeslal jsi rybičky 🐟",
+        `Odeslal jsi ${amount} rybiček uživateli ${toUser}.`
+      );
+
+      sendEmail(
+        receiverData.email,
+        "Přijal jsi rybičky jupí 🐟",
+        `Dostal jsi ${amount} rybiček od ${fromUser}.`
+      );
+    }
+
+  });
+});
 
         db.run("COMMIT", () => {
           res.redirect("/dashboard");
