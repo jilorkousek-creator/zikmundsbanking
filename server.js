@@ -242,6 +242,11 @@ app.get("/dashboard", (req, res) => {
       </label>
      <br><br>
 
+     <label>
+       Tvoje heslo:
+       <input type="password" name="password" required>
+      </label>
+
   <button type="submit">Odeslat</button>
 </form>
 <hr>
@@ -285,50 +290,55 @@ app.post("/transfer", (req, res) => {
   const fromUser = req.session.username;
   const toUser = req.body.to_user.trim().toLowerCase();
   const amount = parseInt(req.body.amount);
+  const password = req.body.password;
 
   if (fromUser === toUser) {
-    return res.send("Nemůžeš poslat rybičky sám sobě 😺");
+    return res.send("Nemůžeš poslat sám sobě 😺");
   }
 
   if (amount <= 0 || isNaN(amount)) {
     return res.send("Neplatná částka");
   }
 
-  // odesilatel
+  // heslo overit
   db.get(
-    "SELECT rybicky FROM users WHERE username = ?",
+    "SELECT * FROM users WHERE username = ?",
     [fromUser],
-    (err, sender) => {
-      if (err || !sender) {
-        return res.send("Chyba odesílatele");
+    async (err, user) => {
+
+      if (err || !user) {
+        return res.send("Chyba uživatele");
       }
 
-      if (sender.rybicky < amount) {
+      const isMatch = await bcrypt.compare(password + PEPPER, user.password);
+
+      if (!isMatch) {
+        return res.send("Špatné heslo ❌");
+      }
+
+      if (user.rybicky < amount) {
         return res.send("Nedostatek rybiček 🐟");
       }
 
-      // prijemce
       db.get(
-        "SELECT rybicky FROM users WHERE username = ?",
+        "SELECT * FROM users WHERE username = ?",
         [toUser],
         (err, receiver) => {
+
           if (err || !receiver) {
             return res.send("Příjemce neexistuje");
           }
 
-          // odecist odesilateli
           db.run(
             "UPDATE users SET rybicky = rybicky - ? WHERE username = ?",
             [amount, fromUser]
           );
 
-          // pricist prijemci
           db.run(
             "UPDATE users SET rybicky = rybicky + ? WHERE username = ?",
             [amount, toUser]
           );
 
-          // transakce zapsat
           db.run(
             `INSERT INTO transactions (from_user, to_user, amount, type)
              VALUES (?, ?, ?, ?)`,
