@@ -6,6 +6,30 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
 const session = require("express-session");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+function sendEmail(to, subject, text) {
+  transporter.sendMail({
+    from: "Zikmund Banking 🐱",
+    to,
+    subject,
+    text
+  }, (err, info) => {
+    if (err) {
+      console.error("Email error:", err);
+    } else {
+      console.log("Email sent");
+    }
+  });
+}
 
 const PEPPER = "ZIKMUNDS_BANKING_SUPER_SECRET_2026";
 
