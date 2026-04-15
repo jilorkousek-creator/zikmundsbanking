@@ -360,37 +360,34 @@ app.post("/transfer", requireLogin, (req, res) => {
           [amount, toUser]
         );
 
+        // ✅ JEN JEDEN INSERT (FIX DUPLICITY)
         db.run(
           `INSERT INTO transactions (from_user, to_user, amount, type)
            VALUES (?, ?, ?, ?)`,
           [fromUser, toUser, amount, "transfer"]
         );
-        db.run(
-  `INSERT INTO transactions (from_user, to_user, amount, type)
-   VALUES (?, ?, ?, ?)`,
-  [fromUser, toUser, amount, "transfer"]
-);
 
-db.get("SELECT email FROM users WHERE username = ?", [fromUser], (err, senderData) => {
-  db.get("SELECT email FROM users WHERE username = ?", [toUser], (err, receiverData) => {
+        // 📧 EMAILY (zůstávají)
+        db.get("SELECT email FROM users WHERE username = ?", [fromUser], (err, senderData) => {
+          db.get("SELECT email FROM users WHERE username = ?", [toUser], (err, receiverData) => {
 
-    if (senderData && receiverData) {
+            if (senderData && receiverData) {
 
-      sendEmail(
-        senderData.email,
-        "Odeslal jsi rybičky 🐟",
-        `Odeslal jsi ${amount} rybiček uživateli ${toUser}.`
-      );
+              sendEmail(
+                senderData.email,
+                "Odeslal jsi rybičky 🐟",
+                `Odeslal jsi ${amount} rybiček uživateli ${toUser}.`
+              );
 
-      sendEmail(
-        receiverData.email,
-        "Přijal jsi rybičky jupí 🐟",
-        `Dostal jsi ${amount} rybiček od ${fromUser}.`
-      );
-    }
+              sendEmail(
+                receiverData.email,
+                "Přijal jsi rybičky 🐟",
+                `Dostal jsi ${amount} rybiček od ${fromUser}.`
+              );
+            }
 
-  });
-});
+          });
+        });
 
         db.run("COMMIT", () => {
           res.redirect("/dashboard");
