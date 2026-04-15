@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="cs">
+    <head>
+        <meta charset="UTF-8">
+        <title>Zikmund's Banking</title>
+    </head>
+
+    <body>
+         <h1>Zikmund’s Banking 🐱🐟</h1>
+         <p>Internetové bankovnictví pro každou kočku</p>
+        
+        <button onclick="openLogin()">Přihlásit</button>
+        <button onclick="openRegister()">Registrovat</button>
+
+         <hr>
+
+        <div id="loginModal" style="display:none; border:1px solid black; padding:20px;">
+        
+         <h2>Přihlášení</h2>
+         <form method="POST" action="/login">
+            <label>
+                Username<br>
+                <input type="text" name="username" required>
+            </label>
+            <br><br>
+
+
+            <label>
+                Heslo<br>
+                <input type="password" name="password" required>
+            </label>
+            <br><br>
+
+
+          <button type="submit">Přihlásit</button>
+            <button type="button" onclick="closeLogin()">Zavřít</button>
+        </form>
+
+    </div>
+
+         <hr>
+        <div id="registerModal" style="display:none; border:1px solid black; padding:20px;">         <h2>Registrace</h2>
+         <form method="POST" action="/register">
+            <label>
+                Jméno kočky<br>
+                <input type="text" name="jmeno" required>
+            </label>
+            <br><br>
+
+            <label>
+                Přijmení kočky<br>
+                <input type="text" name="prijmeni" required>
+            </label>
+            <br><br>
+
+            <label>
+                Username<br>
+                <input type="text" name="username" required>
+            </label>
+            <br><br>
+
+            <label>
+                Rodné číslo<br>
+                <input type="text" name="rodnecislo" required>
+            </label>
+            <br><br>
+
+            <label>
+                Bydliště<br>
+                <input type="text" name="bydliste" required>
+            </label>
+            <br><br>
+
+            <label>
+                Email<br>
+                <input type="email" name="email" required>
+            </label>
+            <br><br>
+
+            <label>
+                Heslo<br>
+                <input type="password" name="password" required>
+            </label>
+            <br><br>
+
+            <button type="submit">Registrovat</button>
+    <button type="button" onclick="closeRegister()">Zavřít</button>
+
+  </form>
+</div>
+
+<script>
+  function openLogin() {
+    document.getElementById("loginModal").style.display = "block";
+  }
+
+  function closeLogin() {
+    document.getElementById("loginModal").style.display = "none";
+  }
+
+  function openRegister() {
+    document.getElementById("registerModal").style.display = "block";
+  }
+
+  function closeRegister() {
+    document.getElementById("registerModal").style.display = "none";
+  }
+</script>
+
+    </body>
+</html>
