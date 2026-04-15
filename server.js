@@ -47,6 +47,13 @@ app.use(
   })
 );
 
+function requireLogin(req, res, next) {
+  if (!req.session.username) {
+    return res.redirect("/");
+  }
+  next();
+}
+
 // database 
 const dbPath = path.join(__dirname, "database2.db");
 console.log("POUŽÍVÁM DB:", dbPath);
