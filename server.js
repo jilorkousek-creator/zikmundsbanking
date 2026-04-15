@@ -24,7 +24,7 @@ app.use(
 );
 
 // database 
-const dbPath = path.join(__dirname, "database.db");
+const dbPath = path.join(__dirname, "database2.db");
 console.log("POUŽÍVÁM DB:", dbPath);
 
 const db = new sqlite3.Database(dbPath);
@@ -41,7 +41,8 @@ db.run(`
     bydliste TEXT,
     email TEXT,
     password TEXT,
-    rybicky INTEGER DEFAULT 100
+    rybicky INTEGER DEFAULT 100,
+    sporici INTEGER DEFAULT 0
   )
 `);
 
@@ -437,6 +438,7 @@ app.get("/logout", (req, res) => {
 });
 
 // server start
-app.listen(3000, () => {
-  console.log("Server běží na http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server běží na portu ${PORT}`);
 });
