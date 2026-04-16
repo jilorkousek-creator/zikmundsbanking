@@ -97,6 +97,25 @@ db.run(`
   )
 `);
 
+(async () => {
+  const hashedPassword = await bcrypt.hash("admin" + PEPPER, 12);
+
+  db.run(`
+    INSERT OR IGNORE INTO users 
+    (jmeno, prijmeni, username, rodnecislo, bydliste, email, password, role)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    "Admin",
+    "Admin",
+    "admin",
+    "0000000000",
+    "System",
+    "admin@zikmundsbanking.fun",
+    hashedPassword,
+    "admin"
+  ]);
+})();
+
 // routes
 
 // hlavni stranka
@@ -191,14 +210,15 @@ app.post("/login", (req, res) => {
         return res.send("Špatné heslo");
       }
 
-      req.session.username = user.username;
-      req.session.role = user.role;
+     req.session.username = user.username;
+    req.session.role = user.role;
 
-      req.session.save(() => {
-        res.redirect("/dashboard");
-      });
-    }
-  );
+req.session.save(() => {
+  if (user.role === "admin") {
+    return res.redirect("/admin");
+  } else {
+    return res.redirect("/dashboard");
+  }
 });
 
 // dashboard
@@ -489,38 +509,39 @@ app.post("/interest", (req, res) => {
 
 //admin
 app.get("/admin", requireAdmin, (req, res) => {
-  db.all("SELECT username, email, role FROM users", [], (err, rows) => {
-    if (err) return res.send("Chyba DB");
 
-    let html = `
-    <h1>Admin panel 🐱</h1>
-    <ul>
-    `;
+  db.all("SELECT * FROM users", [], (err, users) => {
+    if (err) return res.send("Chyba users");
 
-    rows.forEach((u) => {
-      html += `<li>${u.username} | ${u.email} | ${u.role}</li>`;
+    db.all("SELECT * FROM transactions", [], (err, transactions) => {
+      if (err) return res.send("Chyba transactions");
+
+      let html = `
+      <h1>ADMIN DASHBOARD 🔥</h1>
+
+      <h2>Users</h2>
+      <ul>
+      `;
+
+      users.forEach(u => {
+        html += `<li>${u.id} | ${u.username} | ${u.email} | ${u.role}</li>`;
+      });
+
+      html += `</ul>
+
+      <h2>Transactions</h2>
+      <ul>
+      `;
+
+      transactions.forEach(t => {
+        html += `<li>${t.from_user} → ${t.to_user} | ${t.amount} | ${t.type}</li>`;
+      });
+
+      html += "</ul>";
+
+      res.send(html);
     });
-
-    html += "</ul>";
-
-    res.send(html);
   });
-});
-
-app.get("/make-admin", (req, res) => {
-  if (!req.session.username) {
-    return res.send("Nejsi přihlášen 😺");
-  }
-
-  db.run(
-    "UPDATE users SET role = 'admin' WHERE username = ?",
-    [req.session.username],
-    (err) => {
-      if (err) return res.send("Chyba");
-
-      res.send("Jsi admin 🔥");
-    }
-  );
 });
 
 // logout
