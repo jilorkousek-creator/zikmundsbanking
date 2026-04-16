@@ -213,14 +213,14 @@ app.post("/login", (req, res) => {
      req.session.username = user.username;
     req.session.role = user.role;
 
-req.session.save(() => {
-  if (user.role === "admin") {
-    return res.redirect("/admin");
-  } else {
-    return res.redirect("/dashboard");
-  }
+  req.session.save(() => {
+    if (user.role === "admin") {
+      return res.redirect("/admin");
+    } else {
+      return res.redirect("/dashboard");
+    }
+  });
 });
-
 // dashboard
 app.get("/dashboard", (req, res) => {
   if (!req.session.username) {
