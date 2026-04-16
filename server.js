@@ -523,30 +523,34 @@ app.get("/admin", requireAdmin, (req, res) => {
     db.all("SELECT * FROM transactions", [], (err, transactions) => {
       if (err) return res.send("Chyba transactions");
 
-      let html = `
-      <h1>ADMIN DASHBOARD 🔥</h1>
+    let html = `
+<h1>ADMIN DASHBOARD 🔥</h1>
 
-      <h2>Users</h2>
-      <ul>
-      `;
+<form action="/logout" method="GET">
+  <button type="submit">Odhlásit se</button>
+</form>
 
-      users.forEach(u => {
-        html += `<li>${u.id} | ${u.username} | ${u.email} | ${u.role}</li>`;
-      });
+<h2>Users</h2>
+<ul>
+`;
 
-      html += `</ul>
+users.forEach(u => {
+  html += `<li>${u.id} | ${u.username} | ${u.email} | ${u.role}</li>`;
+});
 
-      <h2>Transactions</h2>
-      <ul>
-      `;
+html += `</ul>
 
-      transactions.forEach(t => {
-        html += `<li>${t.from_user} → ${t.to_user} | ${t.amount} | ${t.type}</li>`;
-      });
+<h2>Transactions</h2>
+<ul>
+`;
 
-      html += "</ul>";
+transactions.forEach(t => {
+  html += `<li>${t.from_user} → ${t.to_user} | ${t.amount} | ${t.type}</li>`;
+});
 
-      res.send(html);
+html += "</ul>";
+
+res.send(html);
     });
   });
 });
