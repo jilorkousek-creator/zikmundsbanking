@@ -48,6 +48,18 @@ function requireLogin(req, res, next) {
   next();
 }
 
+function requireAdmin(req, res, next) {
+  if (!req.session.username) {
+    return res.redirect("/");
+  }
+
+  if (req.session.role !== "admin") {
+    return res.status(403).send("Přístup zamítnut 😺");
+  }
+
+  next();
+}
+
 // database 
 const dbPath = path.join(__dirname, "database2.db");
 console.log("POUŽÍVÁM DB:", dbPath);
@@ -67,7 +79,8 @@ db.run(`
     email TEXT,
     password TEXT,
     rybicky INTEGER DEFAULT 100,
-    sporici INTEGER DEFAULT 0
+    sporici INTEGER DEFAULT 0,
+    role TEXT DEFAULT 'user'
   )
 `);
 
@@ -179,6 +192,7 @@ app.post("/login", (req, res) => {
       }
 
       req.session.username = user.username;
+      req.session.role = user.role;
 
       req.session.save(() => {
         res.redirect("/dashboard");
@@ -352,14 +366,12 @@ app.post("/transfer", requireLogin, (req, res) => {
           [amount, toUser]
         );
 
-        // ✅ JEN JEDEN INSERT (FIX DUPLICITY)
         db.run(
           `INSERT INTO transactions (from_user, to_user, amount, type)
            VALUES (?, ?, ?, ?)`,
           [fromUser, toUser, amount, "transfer"]
         );
 
-        // 📧 EMAILY (zůstávají)
         db.get("SELECT email FROM users WHERE username = ?", [fromUser], (err, senderData) => {
           db.get("SELECT email FROM users WHERE username = ?", [toUser], (err, receiverData) => {
 
@@ -475,7 +487,41 @@ app.post("/interest", (req, res) => {
   );
 });
 
+//admin
+app.get("/admin", requireAdmin, (req, res) => {
+  db.all("SELECT username, email, role FROM users", [], (err, rows) => {
+    if (err) return res.send("Chyba DB");
 
+    let html = `
+    <h1>Admin panel 🐱</h1>
+    <ul>
+    `;
+
+    rows.forEach((u) => {
+      html += `<li>${u.username} | ${u.email} | ${u.role}</li>`;
+    });
+
+    html += "</ul>";
+
+    res.send(html);
+  });
+});
+
+app.get("/make-admin", (req, res) => {
+  if (!req.session.username) {
+    return res.send("Nejsi přihlášen 😺");
+  }
+
+  db.run(
+    "UPDATE users SET role = 'admin' WHERE username = ?",
+    [req.session.username],
+    (err) => {
+      if (err) return res.send("Chyba");
+
+      res.send("Jsi admin 🔥");
+    }
+  );
+});
 
 // logout
 app.get("/logout", (req, res) => {
