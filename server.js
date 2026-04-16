@@ -13,7 +13,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 async function sendEmail(to, subject, text) {
   try {
     await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "Zikmunds Banking <no-reply@zikmundsbanking.fun>",
       to: to,
       subject: subject,
       text: text
